@@ -1,0 +1,32 @@
+<div class="col-md-3 float-left col-1 pl-0 pr-0 collapse width " id="sidebar">
+    <div class="list-group border-0 card text-center text-md-left">
+        <a href="#menu1" class="list-group-item d-inline-block collapsed" data-toggle="collapse"
+           data-parent="#sidebar" aria-expanded="false">
+            <i class="fa fa-dashboard"></i> 
+            <span class="d-none d-md-inline">Ajouter</span> 
+        </a>
+        <div class="collapse" id="menu1">
+            <a href="sidebarTest.jsp?uc=addgroup" class="list-group-item" data-parent="#menu1" >Group</a>
+            <a href="sidebarTest.jsp?uc=addfamily" class="list-group-item" data-parent="#menu2">Famille</a>
+            <a href="sidebarTest.jsp?uc=addgenre" class="list-group-item" data-parent="#menu3">Genre</a>
+            <a href="sidebarTest.jsp?uc=addespece" class="list-group-item" data-parent="#menu4">Espece</a>
+        </div>
+        <a href="ManageGraphToJSPF.jsp" class="list-group-item d-inline-block collapsed" data-parent="#sidebar">
+            <i class="fa fa-heart"></i> 
+            <span class="d-none d-md-inline">Manage Graphe</span>
+        </a>
+        <a href="#menu2" class="list-group-item d-inline-block collapsed" data-toggle="collapse"
+           data-parent="#sidebar" aria-expanded="false">
+            <i class="fa fa-dashboard"></i> 
+            <span class="d-none d-md-inline">Search</span> 
+        </a>
+        <div class="collapse" id="menu2">
+            <a href="searchfiltering.jsp" class="list-group-item" data-parent="#menu5" >Group</a>
+            <a href="searchByName.jsp" class="list-group-item" data-parent="#menu6">Famille</a>
+        </div>
+        <a href="showall.jsp" class="list-group-item d-inline-block collapsed" data-parent="#sidebar">
+            <i class="fa fa-heart"></i> 
+            <span class="d-none d-md-inline">Manage Graphe</span>
+        </a>
+    </div>
+</div>

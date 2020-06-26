@@ -1,0 +1,9 @@
+<div class="mb-4 btn btn-secondary">
+    <a onclick="backtopage()"><i class="fa fa-angle-double-left"></i> Retourner</a>
+</div>
+<script>
+    function backtopage() {
+
+        window.history.back();
+    }
+</script>

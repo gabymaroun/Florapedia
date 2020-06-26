@@ -1,0 +1,26 @@
+
+
+
+
+
+<div class="col-lg-3 col-md-4 col-sm-6 portfolio-item">
+    <a href="afficheEspece.jsp?id=<%=k.getId()%>"> <div class="card h-100">
+       
+            <%if (k.getImage() != null) {%>
+            <img class="card-img-top" src="data:image/jpg;base64,<%=Base64.getEncoder().encodeToString((k.getImage().getBytes(1, (int) k.getImage().length())))%>" alt="">
+            <%} else {
+            %>
+
+            <img class="card-img-top" src="image/noimage.jpg" alt=""> 
+            <%
+                }
+            %>
+        
+        <div class="card-body">
+            <h4 class="card-title" style="color: black">
+                <%=k.getName()%>
+            </h4>
+            <p class="card-text"><%=k.getDescription()%></p>
+        </div>
+    </div></a>
+</div>

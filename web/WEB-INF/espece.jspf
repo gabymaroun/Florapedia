@@ -1,0 +1,42 @@
+<form action="AddEspeceServlet" method="post" enctype="multipart/form-data">
+    <div class="row mb-4">
+        <div class="col-sm">
+            <select name="groupid" id="groupid" class="form-control"   required aria-required="true" onchange="refreshfamily()"  >
+                <option>Nom du Groupe</option>
+                <%   for (Key k : lskgroup) {%>
+                <option value="<%=k.getId()%>"><%=k.getName()%></option>
+                <%}%>
+            </select>
+        </div>
+        <div class="col-sm">
+            <select name="famid" id="famid" class="form-control" required aria-required="true">
+                <option>Nom du famille</option>
+            </select>
+        </div>
+    </div>
+    <div class="row mb-4">
+        <div class="col-sm">
+            <select name="genreid" id="genreid" class="form-control" required aria-required="true">
+                <option>Nom du Genre</option>
+            </select>
+        </div>
+        <div class="col-sm">
+            <input type="text" class=" form-control " id="tho" placeholder="Nom de l'éspèce" name="ne" required
+                   pattern="[A-Za-z0-9\s]+"
+                   oninvalid='setCustomValidity("Le nom doit contenir des lettres seulementy")'
+                   oninput='setCustomValidity("")'>
+        </div>
+    </div>
+    <div class="row mb-4">
+        <label class="label">Image:</label>
+        <input class="btn  btn-lg mt-4" type="file" name="image" />
+
+    </div>
+    <div class="row mb-4">
+        <textarea class="form-control" placeholder="Description" name="descp" id="descp" style="height:100%" required></textarea>
+    </div>
+    <div class="row mb-4">
+        <input type="submit" value="Add" class="btn btn-lg btn-secondary " />
+        <input type="hidden" value="addingespece" name="uc"/>
+    </div>
+</form>

@@ -1,0 +1,40 @@
+var lsgroup = [];
+<%for (Key kg : lskgroup) {%>
+var group = {id:<%=kg.getId()%>, name: '<%=kg.getName()%>', lsf: []};
+<%for (Key kf : GraphController.INSTANCE.findByStartingKeyID(kg.getId()).getTaxon()) {%>
+var family = {id:<%=kf.getId()%>, name: '<%=kf.getName()%>', lsg: []};
+<%for (Key kge : GraphController.INSTANCE.findByStartingKeyID(kf.getId()).getTaxon()) {%>
+var genre = {id:<%=kge.getId()%>, name: '<%=kge.getName()%>'};
+family["lsg"].push(genre);
+<%}%>
+group["lsf"].push(family);
+<%}%>
+lsgroup.push(group);
+<%
+    }
+%>
+function refreshfamily() {
+document.getElementById('familyid').innerHTML = '';
+if (document.getElementById('groupid').selectedIndex > -1) {
+for (var item of lsgroup[document.getElementById('groupid').selectedIndex].lsf) {
+var op = document.createElement("option");
+op.value = item["id"];
+op.text = item["name"];
+
+document.getElementById('familyid').options.add(op);
+}
+refreshgenre();
+}
+}
+function refreshgenre() {
+document.getElementById('genreid').innerHTML = '';
+if (document.getElementById('familyid').selectedIndex > -1) {
+for (var item of lsgroup[document.getElementById('groupid').selectedIndex].lsf[document.getElementById('familyid').selectedIndex].lsg) {
+var op = document.createElement("option");
+op.value = item["id"];
+op.text = item["name"];
+
+document.getElementById('genreid').options.add(op);
+}
+}
+}

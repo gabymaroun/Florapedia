@@ -1,0 +1,74 @@
+<div id="sidebar" style="float: left">
+    <div class="sidebar-header">
+        <h3> Fl<a href="cover.jsp" style="text-decoration: none"><img src="image/ico.png" height="30px" width="30px" />rapédia</h3>
+    </div>
+    <ul class="list-unstyled components">
+        <li>
+            <a href="#homeSubmenu" data-toggle="collapse" aria-expanded="false" 
+               class="dropdown-toggle">Ajouter</a>
+            <ul class="collapse list-unstyled" id="homeSubmenu">
+
+                <li>
+                    <a href="addTaxons.jsp?uc=addgroup" 
+                       class="btn btn-lg btn-secondary btn-block">Groupe</a>                          
+                </li>
+                <li>
+                    <a href="addTaxons.jsp?uc=addfamily" 
+                       class="btn btn-lg btn-secondary btn-block">Famille</a>                         
+                </li>
+                <li>
+                    <a href="addTaxons.jsp?uc=addgenre" 
+                       class="btn btn-lg btn-secondary btn-block">Genre</a>                           
+                </li>
+                <li>
+                    <a href="addTaxons.jsp?uc=addespece" 
+                       class="btn btn-lg btn-secondary btn-block">Espèce</a>                            
+                </li>
+            </ul> 
+        </li>
+        <li>
+            <a href="#manageMenu" data-toggle="collapse" aria-expanded="false" 
+               class="dropdown-toggle">Manage Graphe</a>
+            <ul class="collapse list-unstyled" id="manageMenu">
+
+                <li>
+                    <a href="ManageGraphs.jsp?Rootid=1" 
+                       class="btn btn-lg btn-secondary btn-block">Clé</a>                          
+                </li>
+                <li>
+                    <a href="showall.jsp?uc=groups" 
+                       class="btn btn-lg btn-secondary btn-block">Groupe</a>                         
+                </li>
+                <li>
+                    <a href="showall.jsp?uc=famillies" 
+                       class="btn btn-lg btn-secondary btn-block">Famille</a>                           
+                </li>
+                <li>
+                    <a href="showall.jsp?uc=genres" 
+                       class="btn btn-lg btn-secondary btn-block">Genre</a>                            
+                </li>
+            </ul> 
+        </li>
+        <li>
+            <a href="#searchId" data-toggle="collapse" aria-expanded="false" 
+               class="dropdown-toggle">Rechercher</a>
+            <ul class="collapse list-unstyled" id="searchId">
+                <li>
+                    <a href="searchByName.jsp" 
+                       class="btn btn-lg btn-secondary btn-block">Par Nom</a>                         
+                </li>
+                <li>
+                    <a href="searchfiltering.jsp" 
+                       class="btn btn-lg btn-secondary btn-block">Filtration</a>                          
+                </li>
+            </ul> 
+        </li>
+        <li>
+            <a href="showall.jsp">Montre tout</a>
+        </li>
+        <li>
+            <a href="sidebar.jsp?uc=logout">Déconnectez-vous</a>
+        </li>
+    </ul>
+
+</div>

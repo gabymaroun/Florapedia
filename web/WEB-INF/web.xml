@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app version="3.1" xmlns="http://xmlns.jcp.org/xml/ns/javaee" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee http://xmlns.jcp.org/xml/ns/javaee/web-app_3_1.xsd">
+    <servlet>
+        <servlet-name>AddEspeceServlet</servlet-name>
+        <servlet-class>servlets.AddEspeceServlet</servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>AddKeyServlet</servlet-name>
+        <servlet-class>servlets.AddKeyServlet</servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>deleteEspeceServlet</servlet-name>
+        <servlet-class>servlets.deleteEspeceServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>AddEspeceServlet</servlet-name>
+        <url-pattern>/AddEspeceServlet</url-pattern>
+    </servlet-mapping>
+    <servlet>
+        <servlet-name>ModGraphServlet</servlet-name>
+        <servlet-class>servlets.ModGraphServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>ModGraphServlet</servlet-name>
+        <url-pattern>/ModGraphServlet</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>AddKeyServlet</servlet-name>
+        <url-pattern>/AddKeyServlet</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>deleteEspeceServlet</servlet-name>
+        <url-pattern>/deleteEspeceServlet</url-pattern>
+    </servlet-mapping>
+    <session-config>
+        <session-timeout>
+            30
+        </session-timeout>
+    </session-config>
+</web-app>

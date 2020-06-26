@@ -1,0 +1,5 @@
+<nav class="navbar"> 
+    <button type="button" id="sidebarCollapse" class="btn btn-lg btn-secondary">
+        &nbsp;&nbsp;&nbsp;<i class="fa fa-align-justify"></i> 
+    </button>
+</nav>

@@ -1,0 +1,1048 @@
+<script>
+    function Init() {
+    <% Graph C = new Graph();
+        int Working = 0, Genre = 0;
+        String RootId = request.getParameter("Rootid");
+        String Taxon = "";
+        String UserRequest;
+        if (RootId != null) {
+            Working = 1;
+            C = GraphController.INSTANCE.findByStartingKeyID(Integer.parseInt(RootId));
+            UserRequest = C.getRoot().getType();
+            if (UserRequest.equals(TypesNames.ROOT)) {
+                Taxon = TypesNames.GROUP;
+            } else if (UserRequest.equals(TypesNames.GROUP)) {
+                Taxon = TypesNames.FAMILY;
+            } else if (UserRequest.equals(TypesNames.FAMILY)) {
+                Taxon = TypesNames.GENRE;
+            } else {
+                Genre = 1;
+            }
+        }
+
+
+    %>
+        function Rearrange() {
+    <%                    if (C.getRoot() != null) {%>
+            var NewKeys = [];
+            NewKeys.push({Key: Keys[0].Key});
+            var A, B, C, D, Pos = 1, Nkey;
+            var IDs = [];
+            IDs.push(<%=C.getRoot().getId()%>);
+            while (IDs.length > 0) {
+                C = IDs.shift() + "";
+                Keys.forEach(function (i, j) {
+                    A = i.Key.id + "";
+                    B = i.Key.realID + "";
+                    if (A.localeCompare(C) === 0 || B.localeCompare(C) === 0) {
+                        Relations.forEach(function (n, m) {
+                            if (A.localeCompare(n.Relation.Key1 + "") === 0 || B.localeCompare(n.Relation.Key1 + "") === 0) {
+                                NewKeys.push({Key: Keys[n.Relation.Key2Pos].Key});
+                                IDs.push(n.Relation.Key2);
+                                n.Relation.Key2Pos = Pos;
+
+                                Pos++;
+                            }
+                        });
+                    }
+
+                });
+
+                NewKeys.forEach(function (i, j) {
+                    A = i.Key.id + "";
+                    B = i.Key.realID + "";
+                    Relations.forEach(function (k, l) {
+                        C = k.Relation.Key1 + "";
+                        if (A.localeCompare(C) === 0 || B.localeCompare(C) === 0) {
+                            k.Relation.Key1Pos = j;
+                        }
+                    });
+                });
+            }
+            Keys.forEach(function (i, j) {
+                if (i.Key.Lvl === 99)
+                    NewKeys.push({Key: i.Key});
+            });
+            Keys = [];
+            Keys = NewKeys;
+
+            fixPlacements();
+            clearInterval(timerId);
+            timerId = setInterval(CheckPlacements, 25);
+    <%}%>
+        }
+        function Key() {
+            this.realID;
+            this.id;
+            this.Description;
+            this.Type;
+            this.x;
+            this.y;
+            this.Tox;
+            this.Toy;
+            this.width;
+            this.Lvl;
+        }
+
+        function Relation() {
+            this.id;
+            this.realID;
+            this.Key1;
+            this.Key1Pos;
+            this.Key2;
+            this.Key2Pos;
+        }
+
+        function CheckPlacements() {
+            allinplace = 1;
+            Keys.some(function (i, j) {
+                if (Math.abs(i.Key.Tox - i.Key.x) > eps || Math.abs(i.Key.Toy - i.Key.y) > eps) {
+                    allinplace = 0;
+                }
+            });
+            if (allinplace === 1) {
+                clearInterval(timerId);
+                DrawInit();
+                DrawRelations();
+
+            } else
+                DrawInit();
+        }
+        document.getElementById("TaxonHeader").innerHTML = '<%=Taxon%>' + " Informations";
+        let timerId;
+        var MouseX;
+        var MouseY;
+        var eps = 0.1;
+        var State;
+        var count = 2;
+        var Rcount = 0;
+        var SelectedKey1 = 9999;
+        var SelectedKey2 = 9999;
+        var SelectedRightIndex = 9999;
+        var lastScrolledLeft = 0;
+        var lastScrolledTop = 0;
+        var allinplace = 1;
+        var lastPositions = {
+            X: 0,
+            Y: 0
+        };
+        $(window).scroll(function (event) {
+
+            if (lastScrolledLeft !== $(document).scrollLeft()) {
+
+                lastScrolledLeft = $(document).scrollLeft();
+
+            }
+            if (lastScrolledTop !== $(document).scrollTop()) {
+
+                lastScrolledTop = $(document).scrollTop();
+
+            }
+
+        });
+
+        function Target(e)
+        {
+            if (e.offsetX)
+            {
+                MouseX = e.offsetX;
+                MouseY = e.offsetY;
+            } else
+            {
+                MouseX = e.layerX;
+                MouseY = e.layerY;
+            }
+
+        }
+        var dragStart = {
+            Varx: 0,
+            Vary: 0
+        };
+        var dragEnd;
+        var drag = false;
+
+        var getTextHeight = function () {
+
+            var text = $('<span>Hg</span>').css({fontFamily: '12pt Calibri'});
+            var block = $('<div style="display: inline-block; width: 1px; height: 0px;"></div>');
+
+            var div = $('<div></div>');
+            div.append(text, block);
+
+            var body = $('body');
+            body.append(div);
+
+            try {
+
+                var result = {};
+
+                block.css({verticalAlign: 'baseline'});
+                result.ascent = block.offset().top - text.offset().top;
+
+                block.css({verticalAlign: 'bottom'});
+                result.height = block.offset().top - text.offset().top;
+
+                result.descent = result.height - result.ascent;
+
+            } finally {
+                div.remove();
+            }
+
+            return result;
+        };
+        function reset() {
+            /*if (SelectedIndex !== 9999) {
+             document.getElementById(Keys[SelectedIndex].id + "div").style.display = "none";
+             }*/
+            SelectedIndex = 9999;
+            SelectedKey1 = 9999;
+            SelectedKey2 = 9999;
+        }
+        var SelectedIndex = 9999;
+        var Keys = [];
+        var DeletedKeys = [];
+        var Relations = [];
+        var DeletedRelations = [];
+
+        var c = document.getElementById("canvas");
+
+        var size = {
+            width: window.innerWidth || document.body.clientWidth,
+            height: window.innerHeight || document.body.clientHeight
+        };
+
+        function renewPositions() {
+            Relations.forEach(function (i, j) {
+                var A = i.Relation.Key1 + "", B = i.Relation.Key2 + "";
+                Keys.forEach(function (k, l) {
+                    var D = k.Key.realID + "";
+                    if (D.localeCompare("") === 0)
+                        D = k.Key.id;
+                    if (A.localeCompare(D) === 0)
+                        i.Relation.Key1Pos = l;
+                    if (B.localeCompare(D) === 0)
+                        i.Relation.Key2Pos = l;
+                });
+            });
+        }
+        ;
+        function fixPlacements() {
+            fixXPlacement();
+            fixYPlacement();
+        }
+        function fixXPlacement() {
+            var Lvl = 0, LvlCount = 0, Space = 0;
+            Keys.forEach(function (k, l) {
+                if (k.Key.Lvl > Lvl && k.Key.Lvl !== 99) {
+                    Lvl = k.Key.Lvl;
+                }
+            });
+            Lvl++;
+            Space = ((canvas.width - 150) / Lvl);
+            Keys.forEach(function (i, j) {
+                if (i.Key.Lvl !== 99) {
+                    i.Key.Tox = i.Key.Lvl * Space;
+                } else {
+                    i.Key.Tox = Lvl * Space - 100;
+                }
+            });
+
+        }
+
+        function fixYPlacement() {
+            var Lvl = 1, Row = 0, LvlRowCount = 0, Space;
+            Keys.some(function (k, l) {
+                if (k.Key.Lvl === 0) {
+                    k.Key.Toy = canvas.height / 2;
+                }
+            });
+            Keys.forEach(function (i, j) {
+                Keys.forEach(function (k, l) {
+                    if (Lvl === k.Key.Lvl) {
+                        LvlRowCount++;
+                    }
+                });
+
+                if (LvlRowCount !== 0) {
+                    Space = canvas.height / LvlRowCount;
+                    Keys.forEach(function (k, l) {
+                        if (Lvl === k.Key.Lvl) {
+                            if (LvlRowCount === 1) {
+                                k.Key.Toy = Space / 2;
+                            } else {
+                                k.Key.Toy = Row * Space + Space / LvlRowCount;
+                                Row++;
+                            }
+                        }
+                    });
+                }
+                Lvl++;
+                Row = 0;
+                LvlRowCount = 0;
+                Space = 0;
+            });
+            LvlRowCount = 0;
+            Space = 0;
+            Keys.forEach(function (k, l) {
+                if (99 === k.Key.Lvl) {
+                    LvlRowCount++;
+                }
+            });
+            if (LvlRowCount !== 0) {
+                Space = canvas.height / LvlRowCount;
+                Keys.forEach(function (i, j) {
+                    if (i.Key.Lvl === 99) {
+                        if (LvlRowCount === 1) {
+                            i.Key.Toy = canvas.height / 2;
+                        } else {
+                            i.Key.Toy = Row * Space + Space / LvlRowCount;
+                            Row++;
+                        }
+                    }
+                });
+            }
+        }
+        c.width = size.width;
+        c.height = size.height;
+        var Paint = c.getContext("2d");
+        function DrawRelations() {
+
+            var Mcos, Msin;
+            var Mcosn, Msinn;
+            var width, angle;
+            Relations.forEach(function (i, j) {
+                angle = Math.atan2((Keys[i.Relation.Key2Pos].Key.y + getTextHeight().height + 3) - (Keys[i.Relation.Key1Pos].Key.y + getTextHeight().height + 3), Keys[i.Relation.Key2Pos].Key.x - (Keys[i.Relation.Key1Pos].Key.x + Paint.measureText(Keys[i.Relation.Key1Pos].Key.Description).width));
+
+                Mcos = 10 * Math.cos(angle + Math.PI / 6);
+                Msin = 10 * Math.sin(angle + Math.PI / 6);
+                Msinn = 10 * Math.sin(angle - Math.PI / 6);
+                Mcosn = 10 * Math.cos(angle - Math.PI / 6);
+
+                Paint.beginPath();
+                // Staring point (10,45)
+                Paint.moveTo(Keys[i.Relation.Key1Pos].Key.x + Keys[i.Relation.Key1Pos].Key.width, Keys[i.Relation.Key1Pos].Key.y + getTextHeight().height - 3);
+                Paint.lineTo(Keys[i.Relation.Key2Pos].Key.x, Keys[i.Relation.Key2Pos].Key.y + getTextHeight().height - 3);
+
+                // End point (180,47)
+
+
+
+                Paint.lineTo((Keys[i.Relation.Key2Pos].Key.x) - Mcosn, (Keys[i.Relation.Key2Pos].Key.y + getTextHeight().height - 3) - Msinn);
+                Paint.moveTo(Keys[i.Relation.Key2Pos].Key.x, Keys[i.Relation.Key2Pos].Key.y + getTextHeight().height - 3);
+                Paint.lineTo((Keys[i.Relation.Key2Pos].Key.x) - Mcos, (Keys[i.Relation.Key2Pos].Key.y + getTextHeight().height - 3) - Msin);
+                // Make the line visible
+                Paint.stroke();
+
+            });
+        }
+        function DrawInit() {
+            var a;
+            var b;
+            var height;
+            Paint.clearRect(0, 0, canvas.width, canvas.height);
+            Keys.forEach(function (i, j) {
+
+                height = getTextHeight().height + 3;
+
+                a = i.Key.x - i.Key.Tox;
+                b = i.Key.y - i.Key.Toy;
+                if (a < 0)
+                    a = -a;
+                if (b < 0)
+                    b = -b;
+                if (i.Key.x < i.Key.Tox)
+                    i.Key.x += a / 6;
+                if (i.Key.x > i.Key.Tox)
+                    i.Key.x -= a / 6;
+                if (i.Key.y < i.Key.Toy)
+                    i.Key.y += b / 6;
+                if (i.Key.y > i.Key.Toy)
+                    i.Key.y -= b / 6;
+                if (i.Key.Description.localeCompare("") === 0) {
+                    Paint.fillStyle = "#FF0000";
+                    Paint.fillRect(i.Key.x, i.Key.y, 150, 50);
+                } else {
+                    Paint.font = '12pt Calibri';
+                    Paint.fillStyle = 'black';
+                    if (i.Key.Type.localeCompare('<%=TypesNames.TRANSITION%>') !== 0) {
+                        Paint.font = '16pt Calibri';
+                        Paint.fillStyle = 'red';
+                        Paint.beginPath();
+                        Paint.moveTo(i.Key.x, i.Key.y + height);
+                        Paint.lineTo(i.Key.x + i.Key.width, i.Key.y + height);
+                        Paint.stroke();
+                    }
+                    if (SelectedKey1 === j) {
+                        Paint.font = '14pt Calibri';
+                        Paint.fillStyle = 'Blue';
+                    }
+
+                    i.Key.width = Paint.measureText(i.Key.Description).width;
+                    Paint.fillText(i.Key.Description, i.Key.x, i.Key.y + 20);
+                }
+                lastPositions.X = 25;
+                lastPositions.Y = 25;
+
+            });
+
+            lastPositions.X = 25;
+            lastPositions.Y = 25;
+        }
+        function Draw() {
+            Paint.clearRect(0, 0, canvas.width, canvas.height);
+
+            var height;
+            Keys.forEach(function (i, j) {
+
+                Paint.fillStyle = "#FF0000";
+                height = getTextHeight().height + 3;
+                if (j === SelectedKey1 || j === SelectedIndex || j === SelectedKey2) {
+
+                    Paint.fillStyle = "#A30000";
+                }
+                if (i.Key.Description.localeCompare("") === 0)
+                    Paint.fillRect(i.Key.x, i.Key.y, 150, 50);
+                else {
+
+                    Paint.font = '12pt Calibri';
+                    Paint.fillStyle = 'black';
+                    if (i.Key.Type.localeCompare('<%=TypesNames.TRANSITION%>') !== 0) {
+                        Paint.font = '16pt Calibri';
+                        Paint.fillStyle = 'red';
+                        Paint.beginPath();
+                        Paint.moveTo(i.Key.x, i.Key.y + height);
+                        Paint.lineTo(i.Key.x + i.Key.width, i.Key.y + height);
+                        Paint.stroke();
+                    }
+                    if (SelectedKey1 === j) {
+
+                        Paint.font = '14pt Calibri';
+                        Paint.fillStyle = 'Blue';
+                    }
+                    i.Key.width = Paint.measureText(i.Key.Description).width;
+                    Paint.fillText(i.Key.Description, i.Key.x, i.Key.y + 20);
+                }
+
+            });
+
+            DrawRelations();
+        }
+        document.getElementById("DeleteDiv").addEventListener("mouseout", function (  ) {
+            this.style.display = "none";
+
+        });
+
+        document.getElementById("Close").addEventListener("click", function () {
+            document.getElementById("Description").value = "";
+            reset();
+
+        });
+
+        $(window).resize(function () {
+            if (this.resizeTO)
+                clearTimeout(this.resizeTO);
+            this.resizeTO = setTimeout(function () {
+                $(this).trigger('resizeEnd');
+            }, 500);
+        });
+
+        $(window).bind('resizeEnd', function () {
+            size.width = window.innerWidth;
+            size.height = window.innerHeight;
+            c.width = size.width;
+            c.height = size.height;
+            fixPlacements();
+            clearInterval(timerId);
+            timerId = setInterval(CheckPlacements, 25);
+        });
+        document.getElementById("add").addEventListener("click", function () {
+            document.getElementById("Description").value = "";
+            setTimeout(function () {
+                document.getElementById("Description").focus();
+            }, 160);
+        });
+        document.getElementById("Nom").addEventListener("keyup", function (event) {
+            event.preventDefault();
+            if (event.keyCode === 13) {
+                document.getElementById("Ajouter_Taxon").click();
+            }
+        });
+        document.getElementById("Description").addEventListener("keyup", function (event) {
+            event.preventDefault();
+            if (event.keyCode === 13) {
+                document.getElementById("Ajouter").click();
+            }
+        });
+        document.getElementById("addTaxon").addEventListener("click", function () {
+            document.getElementById("Nom").value = "";
+            setTimeout(function () {
+                document.getElementById("Nom").focus();
+            }, 160);
+        });
+        document.getElementById("CloseTax").addEventListener("click", function () {
+            document.getElementById("Nom").value = "";
+            reset();
+        });
+        document.getElementById("Rearrange").addEventListener("click", function () {
+            Rearrange();
+        });
+        $(document).on("click", "#Save", function () { // When HTML DOM "click" event is invoked on element with ID "somebutton", execute the following function...
+    <% if (RootId != null) {%>
+            var URL = "ModGraphServlet?uc=addgraph&";
+            var index;
+            URL += "idroot=" + '<%=C.getRoot().getId()%>' + "&typeroot=" + '<%=C.getRoot().getType()%>' + "&drn=" + DeletedRelations.length;
+
+            DeletedRelations.forEach(function (i, j) {
+                URL += "&drid" + j + "=" + i.id;
+            });
+            URL += "&dkn=" + DeletedKeys.length;
+
+            DeletedKeys.forEach(function (i, j) {
+                URL += "&dkid" + j + "=" + i.realID;
+            });
+            URL += "&newkeyn=" + Keys.length;
+
+            Keys.forEach(function (i, j) {
+                URL += "&idreal" + j + "=" + i.Key.realID + "&idfake" + j + "=" + i.Key.id + "&name" + j + "=" + i.Key.Description + "&type" + j + "=" + i.Key.Type;
+            });
+            URL += "&newreln=" + Relations.length;
+            var A;
+            Relations.forEach(function (i, j) {
+                A = i.Relation.realID + "";
+
+                if (A.localeCompare("") === 0) {
+
+                    URL += "&idfrom" + j + "=" + i.Relation.Key1 + "&idto" + j + "=" + i.Relation.Key2;
+                }
+            });
+
+            $.get(URL, function (responseText) {
+                swal({
+                    title: "Saving Complete!",
+
+                    icon: "success",
+                    button: "Ok",
+                }).then((value) => {
+                    window.location.reload();
+                });
+            });
+    <%}%>
+        });
+        document.getElementById("DeleteKey").addEventListener("click", function () {
+    <%if (C.getRoot() != null) {%>
+            if (Keys[this.value].Key.realID !==<%=C.getRoot().getId()%>) {
+
+                var pos = parseInt(this.value);
+                Delete = 1;
+                Relations.some(function (i, j) {
+                    if (i.Relation.Key1Pos === pos || i.Relation.Key2Pos === pos) {
+                        Delete = 0;
+                    }
+                });
+                if (Delete === 1) {
+                    var A = Keys[this.value].Key.id + "";
+                    if (Keys[this.value].Key.Type.localeCompare('<%=Taxon%>') !== 0) {
+                        if (A.localeCompare("") === 0)
+                            DeletedKeys.push({realID: Keys[this.value].realID});
+
+
+
+
+                        Keys.splice(this.value, 1);
+                    } else {
+                        swal({title: "Operation impossible",
+                            text: "Supprimer'" + Keys[this.value].Key.Description + "' n'est pas une option",
+                            icon: "warning",
+                            buttons: "Ok",
+                        });
+                        return false;
+                    }
+                } else {
+                    swal({title: "Operation impossible",
+                        text: "le Cle '" + Keys[this.value].Key.Description + "' Possede des relations",
+                        icon: "warning",
+                        buttons: "Ok",
+                    });
+
+                }
+            } else {
+                swal({title: "Attention",
+                    text: "C'est le debut du Schema",
+                    icon: "warning",
+                    buttons: "Ok",
+                });
+
+            }
+    <%}%>
+            renewPositions();
+            fixPlacements();
+            clearInterval(timerId);
+            timerId = setInterval(CheckPlacements, 25);
+            document.getElementById("DeleteDiv").style.display = "none";
+        });
+        document.getElementById("Move").addEventListener("click", function () {
+            State = "Move";
+            reset();
+        });
+        document.getElementById("DeleteRelation").addEventListener("click", function () {
+            State = "Delete Relation";
+            reset();
+        });
+        document.getElementById("Relation").addEventListener("click", function () {
+            State = "Relation";
+
+            reset();
+        });
+        document.getElementById("canvas").addEventListener('contextmenu', event => {
+            event.preventDefault();
+            Target(event)
+            var divi = document.getElementById("DeleteDiv");
+            var Divlink = document.getElementById("TaxonLink");
+            var link = document.getElementById("link");
+            Divlink.style.display = "none";
+            divi.style.display = "none";
+            Keys.some(function (i, j) {
+                if (i.Key.x < MouseX && i.Key.x + 150 > MouseX && i.Key.y < MouseY && i.Key.y + 50 > MouseY && i.Key.Description.localeCompare("") === 0 || i.Key.x < MouseX && i.Key.x + Paint.measureText(i.Key.Description).width > MouseX && i.Key.y < MouseY && i.Key.y + getTextHeight().height > MouseY && i.Key.Description.localeCompare("") !== 0) {
+                    document.getElementById("DeleteKey").value = j;
+                    divi.style.top = MouseY - 2 + canvas.getBoundingClientRect().top + lastScrolledTop + "px";
+                    divi.style.left = MouseX - 2 + lastScrolledLeft + "px";
+                    divi.style.display = "block";
+                    if (i.Key.Type.localeCompare('<%=TypesNames.TRANSITION%>') !== 0) {
+                        var A = i.Key.realID + "";
+                        if (A.localeCompare("") !== 0) {
+                            link.setAttribute("href", "ManageGraphs.jsp?Graph=" + '<%=Taxon%>' + "&Graphid=" + A);
+                            Divlink.style.display = "block";
+                        }
+                    }
+                    return true;
+                }
+                return false;
+            });
+        });
+
+        document.getElementById("Ajouter_Taxon").addEventListener("click", function () {
+            AddKey('<%=Taxon%>', 1);
+        });
+
+        document.getElementById("Ajouter").addEventListener("click", function () {
+            AddKey('<%=TypesNames.TRANSITION%>', 0);
+        });
+        function AddKey(Vari, M) {
+            var NewKey = new Key();
+            NewKey.realID = "";
+            NewKey.id = count;
+            NewKey.Lvl = 99;
+            count += 1;
+            if (M === 0)
+                NewKey.Description = document.getElementById("Description").value;
+            else
+                NewKey.Description = document.getElementById("Nom").value;
+            NewKey.Type = Vari;
+            NewKey.x = 25;
+            NewKey.y = 25;
+            NewKey.Tox = 25;
+            NewKey.Toy = 25;
+            Keys.push({Key: NewKey});
+            /*
+             * 
+             *
+             Right Click menu
+             *
+             *
+             */
+            fixPlacements();
+            clearInterval(timerId);
+            timerId = setInterval(CheckPlacements, 25);
+
+            document.getElementById("test").innerHTML = Keys[Keys.length - 1].Key.Description + "</br>";
+        }
+        ;
+
+
+
+        c.addEventListener("mousedown", function (event) {
+            Target(event);
+            if (event.which === 1) {
+
+                if (State.localeCompare("Move") === 0) {
+                    if (SelectedIndex !== 9999) {
+                        // document.getElementById(Keys[SelectedIndex].id + "div").style.display = "none";
+                    }
+                    if (SelectedRightIndex !== 9999) {
+                        document.getElementById(Keys[SelectedRightIndex].id + "menu").style.display = "none";
+                    }
+                    Keys.some(function (i, j) {
+                        //alert("Width: " + Paint.measureText(i.Description).width + " And Height : " + getTextHeight('12pt Calibri').height);
+                        if (i.Key.x < MouseX && i.Key.x + 150 > MouseX && i.Key.y < MouseY && i.Key.y + 50 > MouseY && i.Key.Description.localeCompare("") === 0 || i.Key.x < MouseX && i.Key.x + Paint.measureText(i.Key.Description).width > MouseX && i.Key.y < MouseY && i.Key.y + getTextHeight().height > MouseY && i.Key.Description.localeCompare("") !== 0) {
+                            SelectedIndex = j;
+
+                            /*document.getElementById(Keys[SelectedIndex].id + "div").style.display = "block";*/
+                            dragStart.Varx = MouseX - Keys[SelectedIndex].Key.x;
+                            dragStart.Vary = MouseY - Keys[SelectedIndex].Key.y;
+
+
+                            drag = true;
+                            return true;
+                        } else {
+                            SelectedIndex = 9999;
+                        }
+                        drag = false;
+                        return false;
+                    });
+
+                } else {
+                    Keys.some(function (i, j) {
+                        if (i.Key.x < MouseX && i.Key.x + 150 > MouseX && i.Key.y < MouseY && i.Key.y + 50 > MouseY) {
+                            if (SelectedKey1 === 9999)
+                                if (i.Key.Type.localeCompare('<%=Taxon%>') !== 0)
+                                    SelectedKey1 = j;
+                                else
+                                    swal({
+                                        title: "Operation Impossible",
+                                        text: "Tu ne peut pas cree une relation Pour un Taxon",
+                                        icon: "warning",
+                                        buttons: "Ok",
+                                    });
+                            else
+                                SelectedKey2 = j;
+
+                        }
+                    });
+                    Draw();
+                    if (SelectedKey1 !== 9999 && SelectedKey2 !== 9999) {
+
+                        if (SelectedKey1 !== SelectedKey2) {
+
+                            if (State.localeCompare("Relation") === 0) {
+                                if (Keys[SelectedKey1].Key.Lvl < Keys[SelectedKey2].Key.Lvl) {
+                                    var NewRelation = new Relation();
+                                    NewRelation.id = Rcount++;
+                                    NewRelation.realID = "";
+                                    var A = Keys[SelectedKey1].Key.id + "",
+                                            B = Keys[SelectedKey2].Key.id + "";
+
+                                    if (A.localeCompare("") === 0)
+                                        NewRelation.Key1 = Keys[SelectedKey1].Key.realID;
+                                    else
+                                        NewRelation.Key1 = Keys[SelectedKey1].Key.id;
+
+                                    if (B.localeCompare("") === 0)
+                                        NewRelation.Key2 = Keys[SelectedKey2].Key.realID;
+                                    else
+                                        NewRelation.Key2 = Keys[SelectedKey2].Key.id;
+                                    NewRelation.Key1Pos = SelectedKey1;
+                                    NewRelation.Key2Pos = SelectedKey2;
+                                    Relations.push({Relation: NewRelation});
+                                    //test code//
+
+                                    Keys[SelectedKey2].Key.Lvl = Keys[SelectedKey1].Key.Lvl + 1;
+                                    fixPlacements();
+                                    clearInterval(timerId);
+                                    timerId = setInterval(CheckPlacements, 25);
+
+                                } else if (Keys[SelectedKey1].Key.Lvl === Keys[SelectedKey2].Key.Lvl) {
+                                    swal({
+                                        title: "Operation Impossible",
+                                        text: "Tu ne peut pas cree une relation entre Clef de meme niveau",
+                                        icon: "warning",
+                                        buttons: "Ok",
+                                    });
+
+                                } else {
+                                    swal({
+                                        title: "Operation Impossible",
+                                        text: "Tu ne peut pas cree une relation inverse",
+                                        icon: "warning",
+                                        buttons: "Ok",
+                                    });
+                                }
+                                reset();
+                            } else {
+                                var A, B, C;
+                                A = Keys[SelectedKey1].Key.id + "";
+                                if (A.localeCompare("") === 0) {
+                                    A = Keys[SelectedKey1].Key.realID + "";
+                                }
+                                B = Keys[SelectedKey2].Key.id + "";
+                                if (B.localeCompare("") === 0) {
+                                    B = Keys[SelectedKey2].Key.realID + "";
+                                }
+                                var canDelete = 1;
+                                Relations.some(function (i, j) {
+                                    if (i.Relation.Key1 === parseInt(A, 10) && i.Relation.Key2 === parseInt(B, 10)) {
+
+                                        Relations.some(function (k, l) {
+                                            if (k.Relation.Key1 === i.Relation.Key2) {
+                                                canDelete = 0;
+                                            }
+                                        });
+                                        if (canDelete === 1) {
+                                            C = i.Relation.id + "";
+                                            Keys[i.Relation.Key2Pos].Key.Lvl = 99;
+                                            if (C.localeCompare("") === 0) {
+
+                                                DeletedRelations.push({id: i.Relation.realID});
+                                            }
+
+                                            Relations.splice(j, 1);
+
+                                            reset();
+                                            return true;
+                                        } else {
+                                            swal({
+                                                title: "Operation Impossible",
+                                                text: "Le cle '" + Keys[i.Key2Pos].Key.Description + "' Possede des relations",
+                                                icon: "warning",
+                                                buttons: "Ok",
+                                            });
+
+                                        }
+                                    }
+                                });
+                                reset();
+                                fixPlacements();
+                                clearInterval(timerId);
+                                timerId = setInterval(CheckPlacements, 25);
+                            }
+
+                        } else {
+                            SelectedKey1 = 9999;
+                            SelectedKey2 = 9999;
+                            Draw();
+                        }
+                    }
+
+                    //FillRelations();
+
+                }
+
+
+            }
+        });
+
+        c.addEventListener("mousemove", function (event) {
+            if (drag && event.which === 1) {
+                Target(event);
+                Keys[SelectedIndex].Key.x = MouseX - dragStart.Varx;
+                Keys[SelectedIndex].Key.y = MouseY - dragStart.Vary;
+                var divi = document.getElementById("DeleteDiv");
+                if (divi.style.display === "block") {
+                    /*  divi.style.top = parseInt(divi.style.top , 10)+ MouseY - dragStart.Vary +"px";
+                     divi.style.left= parseInt(divi.style.left , 10)+ MouseX - dragStart.Varx+ "px";*/
+
+                }
+                /*var div = document.getElementById(Keys[SelectedIndex].id + "div");
+                 div.style.top = Keys[SelectedIndex].y + 125 + "px";
+                 div.style.left = Keys[SelectedIndex].x + 0 + "px";*/
+                Draw();
+            }
+
+        });
+        c.addEventListener("mouseup", function (event) {
+            drag = false;
+        });
+        function checkEnter(e) {
+            e = e || event;
+            var txtArea = /textarea/i.test((e.target || e.srcElement).tagName);
+            return txtArea || (e.keyCode || e.which || e.charCode || 0) !== 13;
+        }
+
+
+        if (<%=Working%> === 1) {
+    <%
+        if (C.getRoot() != null) {
+            ArrayList<Relation> ARR = C.getLsr();
+            ArrayList<Key> ARK = C.getLsk();
+            for (Key K : ARK) {
+    %>
+            if (<%=K.getId()%> > count)
+                count = <%=K.getId()%> + 1;
+    <%
+        }
+    %>count += 1;<%
+        for (Key K : ARK) {
+    %>
+                var NewKey = new Key();
+                NewKey.realID = <%=K.getId()%>;
+                NewKey.id = "";
+    <%
+        if (K.getId() == C.getRoot().getId()) {
+    %>
+                NewKey.Lvl = 0;<%
+                } else {
+    %>
+                NewKey.Lvl = 99;
+    <% }
+    %>
+                NewKey.Description = '<%=K.getName()%>';
+                NewKey.Type = '<%=K.getType()%>';
+                NewKey.x = canvas.width / 2;
+                NewKey.y = canvas.height / 2;
+                NewKey.Tox = 25;
+                NewKey.Toy = 25;
+                Keys.push({Key: NewKey});
+    <% }
+
+        for (Relation R : ARR) {
+    %>
+                var NewRelation = new Relation();
+                NewRelation.id = "";
+                NewRelation.realID = <%=R.getID()%>;
+                NewRelation.Key1 = <%=R.getFrom().getId()%>;
+                NewRelation.Key2 = <%=R.getTo().getId()%>;
+                NewRelation.Key1Pos = <%=ARK.indexOf(R.getFrom())%>;
+                NewRelation.Key2Pos = <%=ARK.indexOf(R.getTo())%>;
+                Relations.push({Relation: NewRelation});
+                //test code//
+
+    <% }
+
+
+    %> var Lvl = 0, Stack = 1;
+                while (Stack > 0) {
+                    Stack--;
+                    Keys.forEach(function (k, l) {
+                        Relations.forEach(function (m, n) {
+                            if (Keys[m.Relation.Key1Pos].Key.Lvl === Lvl) {
+                                Keys[m.Relation.Key2Pos].Key.Lvl = Lvl + 1;
+                                Stack++;
+                            }
+                        });
+                    });
+                    Lvl++;
+                }
+                fixPlacements();
+                clearInterval(timerId);
+                timerId = setInterval(CheckPlacements, 25);
+
+                if (<%=Genre%> === 1) {
+                    document.getElementById("addTaxon").disabled = true;
+                }
+
+    <%  }%>
+
+            }
+        }
+
+        function dragElement(elmnt) {
+//alert(elmnt.id + "header");
+            var pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+            if (document.getElementById(elmnt.id + "header")) {
+                /* if present, the header is where you move the DIV from:*/
+
+                document.getElementById(elmnt.id + "header").onmousedown = dragMouseDown;
+                //alert(elmnt.id + "header");
+            } else {
+                /* otherwise, move the DIV from anywhere inside the DIV:*/
+                elmnt.onmousedown = dragMouseDown;
+            }
+
+            function dragMouseDown(e) {
+
+                e = e || window.event;
+                e.preventDefault();
+                // get the mouse cursor position at startup:
+                pos3 = e.clientX;
+                pos4 = e.clientY;
+                document.onmouseup = closeDragElement;
+                // call a function whenever the cursor moves:
+                document.onmousemove = elementDrag;
+            }
+
+            function elementDrag(e) {
+
+                e = e || window.event;
+                e.preventDefault();
+                // calculate the new cursor position:
+                pos1 = pos3 - e.clientX;
+                pos2 = pos4 - e.clientY;
+                pos3 = e.clientX;
+                pos4 = e.clientY;
+                // set the element's new position:
+                elmnt.style.top = (elmnt.offsetTop - pos2) + "px";
+                elmnt.style.left = (elmnt.offsetLeft - pos1) + "px";
+            }
+
+            function closeDragElement() {
+                /* stop moving when mouse button is released:*/
+                document.onmouseup = null;
+                document.onmousemove = null;
+            }
+        }
+
+</script>
+
+<style>
+    canvas {border: 1px solid  black;position:relative;}
+    div.big {
+        position: absolute;
+        z-index: 9;
+        background-color: #f1f1f1;
+        text-align: center;
+        border: 1px solid #d3d3d3;
+        display: none;
+    }
+
+    div.small {
+        padding: 10px;
+        cursor: move;
+        z-index: 10;
+        background-color: #2196F3;
+        color: #fff;
+    }
+    #holder {
+        display:block;
+
+        width:800px;
+        height:600px;
+    }.form-group {
+        position: relative;
+        margin-bottom: 1.5rem;
+    }
+
+    .form-control-placeholder {
+        position: absolute;
+        top: 0;
+        padding: 7px 0 0 13px;
+        transition: all 200ms;
+        opacity: 0.5;
+    }
+
+    .form-control:focus + .form-control-placeholder,
+    .form-control:valid + .form-control-placeholder {
+        font-size: 75%;
+        transform: translate3d(0, -100%, 0);
+        opacity: 1;
+    }
+
+    .slider {
+        -webkit-appearance: none;
+        width: 100%;
+        height: 25px;
+        background: #d3d3d3;
+        outline: none;
+        opacity: 0.7;
+        -webkit-transition: .2s;
+        transition: opacity .2s;
+    }
+
+    .slider:hover {
+        opacity: 1;
+    }
+
+    .slider::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 25px;
+        height: 25px;
+        background: #4CAF50;
+        cursor: pointer;
+    }
+
+    .slider::-moz-range-thumb {
+        width: 25px;
+        height: 25px;
+        background: #4CAF50;
+        cursor: pointer;
+    }
+</style>

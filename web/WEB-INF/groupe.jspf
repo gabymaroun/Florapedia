@@ -1,0 +1,12 @@
+<form action="sidebar.jsp" method="get">
+    <div class="row mb-4">
+        <input type="text" class=" form-control " id="tho" placeholder="Nom du groupe" name="groupname" required
+               pattern="[A-Za-z0-9\s]+"
+               oninvalid='setCustomValidity("Le nom doit contenir des lettres seulementy")'
+               oninput='setCustomValidity("")'>
+    </div>
+    <div class="row mb-4">
+        <input type="submit" value="Add" class="btn btn-lg btn-secondary " />
+        <input type="hidden" value="addinggroup" name="uc"/>
+    </div>
+</form>

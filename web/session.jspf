@@ -1,0 +1,7 @@
+<%@page import="DB.UsersController"%>
+<% if (request.getParameter("loginUsername") != null && request.getParameter("loginPass") != null && UsersController.INSTANCE.check(request.getParameter("loginUsername"), request.getParameter("loginPass"))) {
+        session.setAttribute("loginUsername", request.getParameter("loginUsername"));
+        session.setAttribute("loginPass", request.getParameter("loginPass"));
+        response.sendRedirect("sidebar.jsp");
+    }
+%>
